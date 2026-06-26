@@ -15,6 +15,9 @@ dotenv.config();
 // Connect to database
 connectDB();
 
+// Route files
+const auth = require('./routes/authRoutes');
+
 const app = express();
 const server = http.createServer(app);
 
@@ -42,6 +45,9 @@ app.use(helmet());
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
+
+// Mount routers
+app.use('/api/v1/auth', auth);
 
 // Basic Route
 app.get('/', (req, res) => {
