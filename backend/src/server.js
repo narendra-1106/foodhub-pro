@@ -1,3 +1,4 @@
+const path = require('path');
 const express = require('express');
 const http = require('http');
 const mongoose = require('mongoose');
@@ -17,6 +18,7 @@ connectDB();
 
 // Route files
 const auth = require('./routes/authRoutes');
+const users = require('./routes/userRoutes');
 
 const app = express();
 const server = http.createServer(app);
@@ -46,8 +48,12 @@ if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
 
+// Set static folder
+app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
+
 // Mount routers
 app.use('/api/v1/auth', auth);
+app.use('/api/v1/users', users);
 
 // Basic Route
 app.get('/', (req, res) => {
