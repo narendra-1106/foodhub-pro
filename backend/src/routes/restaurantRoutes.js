@@ -7,9 +7,15 @@ const {
   deleteRestaurant
 } = require('../controllers/restaurantController');
 
+// Include other resource routers
+const menuRouter = require('./menuRoutes');
+
 const { protect, authorize } = require('../middlewares/authMiddleware');
 
 const router = express.Router();
+
+// Re-route into other resource routers
+router.use('/:restaurantId/menu', menuRouter);
 
 router
   .route('/')

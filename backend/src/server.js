@@ -20,6 +20,7 @@ connectDB();
 const auth = require('./routes/authRoutes');
 const users = require('./routes/userRoutes');
 const restaurants = require('./routes/restaurantRoutes');
+const menus = require('./routes/menuRoutes');
 
 const app = express();
 const server = http.createServer(app);
@@ -56,6 +57,7 @@ app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
 app.use('/api/v1/auth', auth);
 app.use('/api/v1/users', users);
 app.use('/api/v1/restaurants', restaurants);
+app.use('/api/v1/menus', menus);
 
 // Basic Route
 app.get('/', (req, res) => {
