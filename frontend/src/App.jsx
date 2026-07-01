@@ -7,6 +7,7 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import Profile from './pages/Profile'
 import ProtectedRoute from './components/ProtectedRoute'
+import OwnerDashboard from './pages/owner/OwnerDashboard'
 
 const Home = () => (
   <div className="flex h-screen items-center justify-center bg-[#121212] text-white">
@@ -48,6 +49,11 @@ function App() {
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/profile" element={<Profile />} />
+        </Route>
+
+        {/* Owner Routes */}
+        <Route element={<ProtectedRoute allowedRoles={['owner', 'admin']} />}>
+          <Route path="/owner/dashboard" element={<OwnerDashboard />} />
         </Route>
       </Routes>
     </Router>
