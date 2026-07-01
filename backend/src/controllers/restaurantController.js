@@ -5,8 +5,58 @@ const Restaurant = require('../models/Restaurant');
 // @access    Public
 exports.getRestaurants = async (req, res, next) => {
   try {
-    const restaurants = await Restaurant.find({ isApproved: true, isActive: true }).populate('owner', 'name email');
-    res.status(200).json({ success: true, count: restaurants.length, data: restaurants });
+    let query;
+    const reqQuery = { ...req.query };
+
+    // Exclude special fields from MongoDB match
+    const removeFields = ['select', 'sort', 'page', 'limit', 'search'];
+    removeFields.forEach(param => delete reqQuery[param]);
+
+    // Create query string with operators ($gt, $lte, etc)
+    let queryStr = JSON.stringify(reqQuery);
+    queryStr = queryStr.replace(/\b(gt|gte|lt|lte|in)\b/g, match => `$${match}`);
+    
+    const parsedQuery = JSON.parse(queryStr);
+    
+    // Only fetch active & approved unless admin (simplified for public browsing)
+    parsedQuery.isApproved = true;
+    parsedQuery.isActive = true;
+
+    // Keyword Search
+    if (req.query.search) {
+      parsedQuery.name = { $regex: req.query.search, $options: 'i' };
+    }
+
+    query = Restaurant.find(parsedQuery).populate('owner', 'name email');
+
+    // Sort
+    if (req.query.sort) {
+      const sortBy = req.query.sort.split(',').join(' ');
+      query = query.sort(sortBy);
+    } else {
+      query = query.sort('-createdAt');
+    }
+
+    // Pagination
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 10;
+    const startIndex = (page - 1) * limit;
+    const total = await Restaurant.countDocuments(parsedQuery);
+
+    query = query.skip(startIndex).limit(limit);
+    const restaurants = await query;
+
+    // Pagination Object
+    const pagination = {};
+    if (page * limit < total) pagination.next = { page: page + 1, limit };
+    if (startIndex > 0) pagination.prev = { page: page - 1, limit };
+
+    res.status(200).json({ 
+      success: true, 
+      count: restaurants.length, 
+      pagination,
+      data: restaurants 
+    });
   } catch (error) {
     res.status(400).json({ success: false, error: error.message });
   }
