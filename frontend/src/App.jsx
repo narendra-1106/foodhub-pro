@@ -3,17 +3,13 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { useDispatch } from 'react-redux'
 import { loadUser } from './redux/slices/authSlice'
 
+import Home from './pages/Home'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import Profile from './pages/Profile'
 import ProtectedRoute from './components/ProtectedRoute'
 import OwnerDashboard from './pages/owner/OwnerDashboard'
-
-const Home = () => (
-  <div className="flex h-screen items-center justify-center bg-[#121212] text-white">
-    <h1 className="text-4xl font-bold">Welcome to FoodHub Pro</h1>
-  </div>
-)
+import RestaurantDetails from './pages/RestaurantDetails'
 
 const Dashboard = () => (
   <div className="flex h-screen items-center justify-center bg-[#121212] text-white">
@@ -41,6 +37,7 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/restaurant/:id" element={<RestaurantDetails />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
