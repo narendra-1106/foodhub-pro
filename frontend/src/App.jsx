@@ -10,6 +10,7 @@ import Profile from './pages/Profile'
 import ProtectedRoute from './components/ProtectedRoute'
 import OwnerDashboard from './pages/owner/OwnerDashboard'
 import RestaurantDetails from './pages/RestaurantDetails'
+import Checkout from './pages/Checkout'
 
 const Dashboard = () => (
   <div className="flex h-screen items-center justify-center bg-[#121212] text-white">
@@ -42,10 +43,11 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
         
-        {/* Protected Routes Example */}
+        {/* Protected Routes */}
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/checkout" element={<Checkout />} />
         </Route>
 
         {/* Owner Routes */}
