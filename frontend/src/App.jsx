@@ -11,6 +11,8 @@ import ProtectedRoute from './components/ProtectedRoute'
 import OwnerDashboard from './pages/owner/OwnerDashboard'
 import RestaurantDetails from './pages/RestaurantDetails'
 import Checkout from './pages/Checkout'
+import OrderHistory from './pages/OrderHistory'
+import OrderDetails from './pages/OrderDetails'
 
 const Dashboard = () => (
   <div className="flex h-screen items-center justify-center bg-[#121212] text-white">
@@ -48,6 +50,8 @@ function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/checkout" element={<Checkout />} />
+          <Route path="/orders" element={<OrderHistory />} />
+          <Route path="/order/:id" element={<OrderDetails />} />
         </Route>
 
         {/* Owner Routes */}
