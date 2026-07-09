@@ -22,6 +22,7 @@ const users = require('./routes/userRoutes');
 const restaurants = require('./routes/restaurantRoutes');
 const menus = require('./routes/menuRoutes');
 const orders = require('./routes/orderRoutes');
+const admin = require('./routes/adminRoutes');
 
 const app = express();
 const server = http.createServer(app);
@@ -60,6 +61,7 @@ app.use('/api/v1/users', users);
 app.use('/api/v1/restaurants', restaurants);
 app.use('/api/v1/menus', menus);
 app.use('/api/v1/orders', orders);
+app.use('/api/v1/admin', admin);
 
 // Basic Route
 app.get('/', (req, res) => {
