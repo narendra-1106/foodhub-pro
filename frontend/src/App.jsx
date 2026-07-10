@@ -9,6 +9,7 @@ import Register from './pages/Register'
 import Profile from './pages/Profile'
 import ProtectedRoute from './components/ProtectedRoute'
 import OwnerDashboard from './pages/owner/OwnerDashboard'
+import AdminDashboard from './pages/admin/AdminDashboard'
 import RestaurantDetails from './pages/RestaurantDetails'
 import Checkout from './pages/Checkout'
 import OrderHistory from './pages/OrderHistory'
@@ -57,6 +58,11 @@ function App() {
         {/* Owner Routes */}
         <Route element={<ProtectedRoute allowedRoles={['owner', 'admin']} />}>
           <Route path="/owner/dashboard" element={<OwnerDashboard />} />
+        </Route>
+
+        {/* Admin Routes */}
+        <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
         </Route>
       </Routes>
     </Router>
