@@ -10,6 +10,7 @@ import Profile from './pages/Profile'
 import ProtectedRoute from './components/ProtectedRoute'
 import OwnerDashboard from './pages/owner/OwnerDashboard'
 import AdminDashboard from './pages/admin/AdminDashboard'
+import DeliveryDashboard from './pages/delivery/DeliveryDashboard'
 import RestaurantDetails from './pages/RestaurantDetails'
 import Checkout from './pages/Checkout'
 import OrderHistory from './pages/OrderHistory'
@@ -63,6 +64,11 @@ function App() {
         {/* Admin Routes */}
         <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        </Route>
+
+        {/* Delivery Routes */}
+        <Route element={<ProtectedRoute allowedRoles={['delivery', 'admin']} />}>
+          <Route path="/delivery/dashboard" element={<DeliveryDashboard />} />
         </Route>
       </Routes>
     </Router>
