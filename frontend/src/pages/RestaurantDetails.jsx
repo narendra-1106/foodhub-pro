@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
-import { FiStar, FiMapPin, FiClock, FiPlus, FiMinus, FiShoppingCart } from 'react-icons/fi';
+import { FiStar, FiMapPin, FiClock, FiPlus, FiMinus, FiShoppingCart, FiMessageSquare } from 'react-icons/fi';
 import api from '../services/api';
 import { addToCart, removeFromCart } from '../redux/slices/cartSlice';
+import { getReviews, addReview, clearReviewError } from '../redux/slices/reviewSlice';
 
 const RestaurantDetails = () => {
   const { id } = useParams();
@@ -14,11 +15,19 @@ const RestaurantDetails = () => {
   const [restaurant, setRestaurant] = useState(null);
   const [menus, setMenus] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('menu'); // 'menu' or 'reviews'
+  
+  // Review form state
+  const [rating, setRating] = useState(5);
+  const [title, setTitle] = useState('');
+  const [text, setText] = useState('');
 
-  // Cart State
+  // Redux States
   const cart = useSelector(state => state.cart);
   const cartItems = cart.items;
   const totalAmount = cart.totalAmount;
+  const { user } = useSelector(state => state.auth);
+  const { reviews, loading: reviewsLoading, error: reviewError } = useSelector(state => state.review);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -38,6 +47,12 @@ const RestaurantDetails = () => {
     fetchData();
   }, [id]);
 
+  useEffect(() => {
+    if (activeTab === 'reviews') {
+      dispatch(getReviews(id));
+    }
+  }, [activeTab, dispatch, id]);
+
   const getItemQuantity = (itemId) => {
     const item = cartItems.find(i => i._id === itemId);
     return item ? item.quantity : 0;
@@ -49,6 +64,22 @@ const RestaurantDetails = () => {
 
   const handleRemove = (itemId) => {
     dispatch(removeFromCart(itemId));
+  };
+
+  const handleReviewSubmit = (e) => {
+    e.preventDefault();
+    if (!user) {
+      alert('Please log in to leave a review.');
+      return navigate('/login');
+    }
+    dispatch(addReview({ restaurantId: id, rating, title, text })).then((res) => {
+      if (!res.error) {
+        setTitle('');
+        setText('');
+        setRating(5);
+        dispatch(clearReviewError());
+      }
+    });
   };
 
   if (loading) {
@@ -98,59 +129,127 @@ const RestaurantDetails = () => {
           </div>
         </div>
 
+        {/* Tabs */}
+        <div className="flex space-x-4 mb-8 border-b border-white/10 pb-4">
+          <button 
+            onClick={() => setActiveTab('menu')}
+            className={`text-xl font-bold transition ${activeTab === 'menu' ? 'text-orange-500 border-b-2 border-orange-500 pb-2' : 'text-gray-500 hover:text-white'}`}
+          >
+            Menu
+          </button>
+          <button 
+            onClick={() => setActiveTab('reviews')}
+            className={`text-xl font-bold transition ${activeTab === 'reviews' ? 'text-orange-500 border-b-2 border-orange-500 pb-2' : 'text-gray-500 hover:text-white'}`}
+          >
+            Reviews
+          </button>
+        </div>
+
         {/* Menu Section */}
-        <h2 className="mb-8 text-3xl font-bold border-b border-white/10 pb-4">Menu</h2>
-        
-        {menus.length === 0 ? (
-          <p className="text-gray-400">No menu items available right now.</p>
-        ) : (
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            {menus.map((item, index) => {
-              const qty = getItemQuantity(item._id);
-              
-              return (
-                <motion.div 
-                  key={item._id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  className="flex items-center justify-between overflow-hidden rounded-xl border border-white/5 bg-white/5 p-4 hover:bg-white/10 transition"
-                >
-                  <div className="flex-1 pr-4">
-                    <div className="flex items-center space-x-2">
-                      <h3 className="text-lg font-bold">{item.name}</h3>
-                      {item.isVegetarian && <span className="h-3 w-3 rounded-full bg-green-500" title="Vegetarian"></span>}
-                    </div>
-                    <p className="mt-1 text-sm text-gray-400 line-clamp-2">{item.description}</p>
-                    <div className="mt-3 flex items-center justify-between">
-                      <span className="text-lg font-semibold text-orange-500">${item.price.toFixed(2)}</span>
-                      
-                      {qty === 0 ? (
-                        <button 
-                          onClick={() => handleAdd(item)}
-                          className="flex items-center space-x-1 rounded-lg bg-orange-500/20 px-4 py-1.5 text-sm font-semibold text-orange-500 transition hover:bg-orange-500 hover:text-white"
-                        >
-                          <FiPlus /> <span>Add</span>
-                        </button>
-                      ) : (
-                        <div className="flex items-center space-x-3 rounded-lg bg-orange-500 px-2 py-1 text-white">
-                          <button onClick={() => handleRemove(item._id)} className="p-1 hover:bg-white/20 rounded-md transition"><FiMinus /></button>
-                          <span className="font-bold w-4 text-center">{qty}</span>
-                          <button onClick={() => handleAdd(item)} className="p-1 hover:bg-white/20 rounded-md transition"><FiPlus /></button>
+        {activeTab === 'menu' && (
+          <div>
+            {menus.length === 0 ? (
+              <p className="text-gray-400">No menu items available right now.</p>
+            ) : (
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                {menus.map((item, index) => {
+                  const qty = getItemQuantity(item._id);
+                  return (
+                    <motion.div 
+                      key={item._id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      className="flex items-center justify-between overflow-hidden rounded-xl border border-white/5 bg-white/5 p-4 hover:bg-white/10 transition"
+                    >
+                      <div className="flex-1 pr-4">
+                        <div className="flex items-center space-x-2">
+                          <h3 className="text-lg font-bold">{item.name}</h3>
+                          {item.isVegetarian && <span className="h-3 w-3 rounded-full bg-green-500" title="Vegetarian"></span>}
                         </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="h-28 w-28 flex-shrink-0 overflow-hidden rounded-lg">
-                    <img 
-                      src={item.image === 'no-photo.jpg' ? 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=2080&auto=format&fit=crop' : `http://localhost:5000${item.image}`} 
-                      alt={item.name} 
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
-                </motion.div>
-              );
-            })}
+                        <p className="mt-1 text-sm text-gray-400 line-clamp-2">{item.description}</p>
+                        <div className="mt-3 flex items-center justify-between">
+                          <span className="text-lg font-semibold text-orange-500">${item.price.toFixed(2)}</span>
+                          
+                          {qty === 0 ? (
+                            <button 
+                              onClick={() => handleAdd(item)}
+                              className="flex items-center space-x-1 rounded-lg bg-orange-500/20 px-4 py-1.5 text-sm font-semibold text-orange-500 transition hover:bg-orange-500 hover:text-white"
+                            >
+                              <FiPlus /> <span>Add</span>
+                            </button>
+                          ) : (
+                            <div className="flex items-center space-x-3 rounded-lg bg-orange-500 px-2 py-1 text-white">
+                              <button onClick={() => handleRemove(item._id)} className="p-1 hover:bg-white/20 rounded-md transition"><FiMinus /></button>
+                              <span className="font-bold w-4 text-center">{qty}</span>
+                              <button onClick={() => handleAdd(item)} className="p-1 hover:bg-white/20 rounded-md transition"><FiPlus /></button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="h-28 w-28 flex-shrink-0 overflow-hidden rounded-lg">
+                        <img 
+                          src={item.image === 'no-photo.jpg' ? 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=2080&auto=format&fit=crop' : `http://localhost:5000${item.image}`} 
+                          alt={item.name} 
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Reviews Section */}
+        {activeTab === 'reviews' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div>
+              <h3 className="text-2xl font-bold mb-6 flex items-center space-x-2"><FiMessageSquare className="text-orange-500"/> <span>Leave a Review</span></h3>
+              <form onSubmit={handleReviewSubmit} className="bg-white/5 border border-white/10 rounded-2xl p-6 shadow-xl space-y-4">
+                {reviewError && <div className="text-red-500 bg-red-500/10 p-3 rounded-lg border border-red-500/20 text-sm">{reviewError}</div>}
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Rating (1-5)</label>
+                  <input type="number" min="1" max="5" value={rating} onChange={e=>setRating(e.target.value)} className="w-full bg-black/50 border border-white/10 rounded-lg p-3 outline-none focus:border-orange-500" required />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Title</label>
+                  <input type="text" value={title} onChange={e=>setTitle(e.target.value)} placeholder="E.g., Amazing food!" className="w-full bg-black/50 border border-white/10 rounded-lg p-3 outline-none focus:border-orange-500" required />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Review</label>
+                  <textarea value={text} onChange={e=>setText(e.target.value)} placeholder="Write your review here..." rows="4" className="w-full bg-black/50 border border-white/10 rounded-lg p-3 outline-none focus:border-orange-500" required />
+                </div>
+                <button disabled={reviewsLoading} type="submit" className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 rounded-xl transition">
+                  {reviewsLoading ? 'Submitting...' : 'Submit Review'}
+                </button>
+              </form>
+            </div>
+
+            <div>
+              <h3 className="text-2xl font-bold mb-6">Customer Reviews</h3>
+              {reviews.length === 0 ? (
+                <p className="text-gray-400 bg-white/5 p-6 rounded-2xl text-center">No reviews yet. Be the first!</p>
+              ) : (
+                <div className="space-y-4">
+                  {reviews.map((rev) => (
+                    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} key={rev._id} className="bg-white/5 border border-white/10 p-5 rounded-2xl">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <p className="font-bold">{rev.title}</p>
+                          <p className="text-xs text-gray-400">By {rev.user?.name} on {new Date(rev.createdAt).toLocaleDateString()}</p>
+                        </div>
+                        <div className="flex items-center space-x-1 text-green-500 bg-green-500/10 px-2 py-1 rounded text-sm font-bold">
+                          <span>{rev.rating}</span> <FiStar className="fill-current" />
+                        </div>
+                      </div>
+                      <p className="text-gray-300 text-sm mt-3">{rev.text}</p>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
@@ -181,3 +280,4 @@ const RestaurantDetails = () => {
 };
 
 export default RestaurantDetails;
+

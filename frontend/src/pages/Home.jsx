@@ -1,3 +1,4 @@
+// Force HMR Reload
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FiSearch, FiStar, FiMapPin } from 'react-icons/fi';
@@ -16,7 +17,7 @@ const Home = () => {
   const fetchRestaurants = async (searchQuery = '') => {
     setLoading(true);
     try {
-      const url = searchQuery ? `/restaurants?search=${searchQuery}` : '/restaurants';
+      const url = searchQuery ? `/restaurants?keyword=${searchQuery}` : '/restaurants';
       const res = await api.get(url);
       setRestaurants(res.data.data);
     } catch (err) {

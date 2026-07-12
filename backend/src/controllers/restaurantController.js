@@ -8,26 +8,27 @@ exports.getRestaurants = async (req, res, next) => {
     let query;
     const reqQuery = { ...req.query };
 
-    // Exclude special fields from MongoDB match
-    const removeFields = ['select', 'sort', 'page', 'limit', 'search'];
+    // Fields to exclude
+    const removeFields = ['select', 'sort', 'page', 'limit', 'keyword'];
     removeFields.forEach(param => delete reqQuery[param]);
 
-    // Create query string with operators ($gt, $lte, etc)
+    // Create query string
     let queryStr = JSON.stringify(reqQuery);
     queryStr = queryStr.replace(/\b(gt|gte|lt|lte|in)\b/g, match => `$${match}`);
-    
-    const parsedQuery = JSON.parse(queryStr);
-    
-    // Only fetch active & approved unless admin (simplified for public browsing)
-    parsedQuery.isApproved = true;
-    parsedQuery.isActive = true;
 
-    // Keyword Search
-    if (req.query.search) {
-      parsedQuery.name = { $regex: req.query.search, $options: 'i' };
+    query = Restaurant.find(JSON.parse(queryStr)).populate('owner', 'name email');
+
+    // Handle Keyword Search (Name, Address, or Cuisines)
+    if (req.query.keyword) {
+      const regex = new RegExp(req.query.keyword, 'i'); // Case insensitive
+      query = query.find({
+        $or: [
+          { name: regex },
+          { address: regex },
+          { cuisines: regex }
+        ]
+      });
     }
-
-    query = Restaurant.find(parsedQuery).populate('owner', 'name email');
 
     // Sort
     if (req.query.sort) {
@@ -41,7 +42,7 @@ exports.getRestaurants = async (req, res, next) => {
     const page = parseInt(req.query.page, 10) || 1;
     const limit = parseInt(req.query.limit, 10) || 10;
     const startIndex = (page - 1) * limit;
-    const total = await Restaurant.countDocuments(parsedQuery);
+    const total = await Restaurant.countDocuments(query.getFilter());
 
     query = query.skip(startIndex).limit(limit);
     const restaurants = await query;
